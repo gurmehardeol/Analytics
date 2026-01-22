@@ -1,0 +1,172 @@
+# Car Price Prediction Pipeline Configuration
+
+# Data Paths
+data:
+  raw_data: "car_price_prediction_with_missing.csv"
+  processed_data: "data/processed_data.pkl"
+  output_dir: "data"
+
+# Output Directories
+directories:
+  # Shared data directory (used across scripts)
+  data: "data"
+  
+  # Script-specific output directories
+  eda_output: "outputs/eda"
+  preprocessing_output: "outputs/preprocessing"
+  modeling_output: "outputs/modeling"
+
+# Target and Feature Columns
+columns:
+  target: "Price"
+  id_column: "Car ID"
+  feature_columns:
+    - "Brand"
+    - "Model"
+    - "Year"
+    - "Engine Size"
+    - "Mileage"
+    - "Fuel Type"
+    - "Transmission"
+    - "Condition"
+  numeric_features:
+    - "Year"
+    - "Engine Size"
+    - "Mileage"
+  categorical_features:
+    - "Brand"
+    - "Model"
+    - "Fuel Type"
+    - "Transmission"
+    - "Condition"
+
+# Preprocessing Configuration
+preprocessing:
+  # Data validation
+  validation:
+    enabled: true
+    check_logical_consistency: true  # Check brand-fuel type combinations
+    remove_invalid_records: true  # Set to true to remove invalid data
+    
+  # Missing value handling
+  missing_values:
+    numeric_strategy: "median"  # Options: mean, median, mode, drop
+    categorical_strategy: "mode"  # Options: mode, constant, drop
+    constant_fill_value: "Unknown"
+    
+  # Encoding strategies
+  encoding:
+    method: "target"  # Options: onehot, label, target
+    handle_unknown: "ignore"  # For one-hot encoding
+    drop_first: false  # For one-hot encoding to avoid multicollinearity
+    # Target encoding settings (for high-cardinality features)
+    target_encoding:
+      smoothing: 1.0  # Smoothing parameter for target encoding
+      min_samples_leaf: 1  # Minimum samples to compute target encoding
+      high_cardinality_threshold: 10  # Use target encoding if categories > threshold
+    
+  # Scaling/Normalization
+  scaling:
+    method: "standard"  # Options: standard, minmax, robust, none
+    numeric_only: true
+    
+  # Feature Engineering
+  feature_engineering:
+    create_age_feature: true  # Create car age from year
+    current_year: 2026
+    create_brand_tier: true  # Create luxury/economy indicator
+    create_mileage_per_year: true  # Mileage per year ratio
+    create_interaction_features: true  # Year × Brand, Age × Mileage, etc.
+    create_polynomial_features: false  # Polynomial features for numeric vars
+    polynomial_degree: 2
+    
+  # Outlier handling
+  outliers:
+    method: "iqr"  # Options: iqr, zscore, none
+    threshold: 1.5  # For IQR method (1.5 is standard)
+    handle: "remove"  # Options: cap, remove, none
+
+# EDA Configuration
+eda:
+  plot_style: "whitegrid"
+  color_palette: "husl"
+  figure_size: [10, 6]
+  dpi: 100
+  save_format: "png"
+  
+  # Visualization options
+  visualizations:
+    distribution_plots: true
+    correlation_heatmap: true
+    scatter_plots: true
+    box_plots: true
+    count_plots: true
+    pairplot: false  # Can be slow for large datasets
+
+# Modeling Configuration
+modeling:
+  # Train-test split
+  train_test_split:
+    test_size: 0.2
+    random_state: 42
+    shuffle: true
+    
+  # Models to train
+  models:
+    linear_regression:
+      enabled: true
+      use_ridge: true  # Use Ridge regression for regularization
+      params:
+        alpha: 10.0  # Regularization strength
+      
+    random_forest:
+      enabled: true
+      params:
+        n_estimators: 200
+        max_depth: 15
+        min_samples_split: 10
+        min_samples_leaf: 4
+        max_features: 'sqrt'
+        random_state: 42
+        n_jobs: -1
+        
+    xgboost:
+      enabled: true
+      params:
+        n_estimators: 200
+        max_depth: 8
+        learning_rate: 0.05
+        subsample: 0.8
+        colsample_bytree: 0.8
+        reg_alpha: 0.1  # L1 regularization
+        reg_lambda: 1.0  # L2 regularization
+        random_state: 42
+        n_jobs: -1
+        
+  # Feature importance
+  feature_importance:
+    top_n: 10
+    plot: true
+    
+  # Tree visualization
+  tree_visualization:
+    max_depth: 3  # Depth to visualize
+    tree_index: 0  # Which tree from forest to visualize
+    
+  # Cross-validation
+  cross_validation:
+    enabled: true
+    cv_folds: 5
+    
+  # Model evaluation metrics
+  evaluation:
+    metrics:
+      - "mae"  # Mean Absolute Error
+      - "rmse"  # Root Mean Squared Error
+      - "r2"  # R-squared
+      - "mape"  # Mean Absolute Percentage Error
+      
+# Logging
+logging:
+  level: "INFO"  # Options: DEBUG, INFO, WARNING, ERROR
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

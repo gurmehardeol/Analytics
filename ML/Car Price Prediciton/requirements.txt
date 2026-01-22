@@ -1,0 +1,22 @@
+# Requirements file for Car Price Prediction ML Pipeline
+
+# Core Data Science Libraries
+pandas>=1.5.0
+numpy>=1.23.0
+
+# Machine Learning
+scikit-learn>=1.2.0
+xgboost>=1.7.0
+
+# Visualization
+matplotlib>=3.6.0
+seaborn>=0.12.0
+
+# Configuration
+pyyaml>=6.0
+
+# Model Persistence
+joblib>=1.2.0
+
+# Optional: Statistical Analysis
+scipy>=1.10.0
