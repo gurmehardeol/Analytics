@@ -1,0 +1,156 @@
+# ============================================================
+# Customer Segmentation Pipeline — Configuration File
+# ============================================================
+# Copy this file into any new project folder alongside CLAUDE.md
+# and .claude/agents/. Edit the values below, then run:
+#
+#   cd /path/to/your/project
+#   claude
+#   > Run the customer segmentation pipeline per CLAUDE.md
+# ============================================================
+
+# ------------------------------------------------------------
+# PROJECT
+# ------------------------------------------------------------
+project:
+  name: "Telehealth Appointment Segmentation"
+  description: "Segment telehealth appointment records to identify patient behaviour patterns and predict no-shows"
+
+# ------------------------------------------------------------
+# DATA
+# ------------------------------------------------------------
+data:
+  # Path to the raw CSV, relative to the project root
+  file: "data/telehealth_appointments.csv"
+
+  # Row identifier column — will be dropped before modeling
+  id_column: "appointment_id"
+
+  # If you already know your column types, list them here.
+  # Leave both lists EMPTY ([]) to let the agents auto-detect.
+  numeric_columns:
+    - patient_age
+    - days_from_booking_to_visit
+    - prior_no_shows
+    - reminders_sent
+    - previsit_tech_checks
+    - symptom_severity
+    - visit_duration_minutes
+    - weekend_visit
+    - satisfaction_score
+    - no_show
+
+  categorical_columns:
+    - specialty
+    - payer_type
+    - device_type
+    - preferred_language
+
+  # Columns to always drop (IDs, free-text, timestamps you don't want)
+  drop_columns:
+    - scheduled_at
+
+  # Optional: a known ordinal column with a defined order
+  # Leave empty if none. Agents will label-encode these in order.
+  ordinal_columns: {}
+
+# ------------------------------------------------------------
+# EDA
+# ------------------------------------------------------------
+eda:
+  # Skewness threshold above which a column is flagged as high-skew
+  skew_threshold: 1.0
+
+  # Dominant class percentage above which a categorical column is flagged
+  # as imbalanced (e.g. 0.70 = 70%)
+  imbalance_threshold: 0.70
+
+  # Max number of columns in the pairplot (keep ≤ 6 for readability)
+  pairplot_max_cols: 5
+
+# ------------------------------------------------------------
+# PREPROCESSING
+# ------------------------------------------------------------
+preprocessing:
+  # Missing value strategy by band:
+  #   impute  = fill with median (numeric) or mode (categorical)
+  #   drop    = remove the column
+  missing_value_strategy:
+    low:    { threshold: 0.05, action: "impute" }
+    medium: { threshold: 0.20, action: "impute_with_indicator" }
+    high:   { threshold: 1.00, action: "drop" }
+
+  # Winsorisation percentile bounds (e.g. 5 = 5th and 95th percentile)
+  winsorise_percentile: 5
+
+  # Whether to generate engineered features automatically
+  # The agents will attempt: spend_per_item, high_spender flag, etc.
+  # if relevant columns are detected
+  auto_engineer_features: true
+
+  # Encoding strategy for nominal categoricals
+  # "onehot" uses pd.get_dummies with drop_first=True
+  # "label"  uses LabelEncoder (use only if high cardinality)
+  nominal_encoding: "onehot"
+
+# ------------------------------------------------------------
+# CLUSTERING
+# ------------------------------------------------------------
+clustering:
+  # Range of k values to sweep (inclusive)
+  k_min: 2
+  k_max: 8
+
+  # KMeans settings
+  random_state: 42
+  n_init: 10
+
+  # DBSCAN validation settings
+  dbscan_eps: 0.5
+  dbscan_min_samples: 5
+
+  # Silhouette score below which a warning is issued
+  # Negative values indicate clusters worse than random
+  silhouette_warning_threshold: 0.10
+  silhouette_fail_threshold: 0.0
+
+# ------------------------------------------------------------
+# CLASSIFICATION
+# ------------------------------------------------------------
+classification:
+  # Models to train. Supported: "random_forest", "xgboost"
+  models:
+    - "random_forest"
+    - "xgboost"
+
+  # Train/test split
+  test_size: 0.20
+  random_state: 42
+  stratify: true
+
+  # Accuracy threshold above which a data leakage warning is triggered
+  accuracy_warning_threshold: 0.995
+
+# ------------------------------------------------------------
+# OUTPUTS
+# ------------------------------------------------------------
+outputs:
+  # Root directory for all outputs (relative to project root)
+  dir: "outputs"
+
+  # Whether to overwrite existing files (false = append _v2, _v3 etc.)
+  overwrite: false
+
+# ------------------------------------------------------------
+# DOMAIN HINTS (optional but improves persona naming)
+# ------------------------------------------------------------
+domain:
+  # Brief description of who the records represent
+  entity: "patients"
+
+  # Industry context — helps agents write better persona names and
+  # marketing/business implications
+  industry: "healthcare"
+
+  # Any specific goal you want the clustering to optimise for
+  segmentation_goal: "Identify patient segments with high no-show risk to improve telehealth care delivery and outreach"
